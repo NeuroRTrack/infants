@@ -1,6 +1,6 @@
 {
   "sub": "05",
-  "ses": "33w",
+  "ses": "all",
   "run": "all",
   "output_dir": "./output",
   "dataset_dir": "../Shared/infants-dataset",
