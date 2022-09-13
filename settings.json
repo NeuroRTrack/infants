@@ -1,0 +1,11 @@
+{
+  "sub": "05",
+  "ses": "33w",
+  "run": "all",
+  "output_dir": "./output",
+  "dataset_dir": "../Shared/infants-dataset",
+  "eeg_subdir": "sub-<SUB>/ses-<SES>/eeg/",
+  "filename": "sub-<SUB>_ses-<SES>_task-psg_run-<RUN>",
+  "eeg_suffix": "_eeg.edf",
+  "hyp_suffix": "_hyp.txt"
+}
