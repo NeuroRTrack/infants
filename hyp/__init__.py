@@ -72,6 +72,7 @@ def run():
 
             # ANNOTATIONS
             df = analysis.get_hyp_df(filename, settings)
+            print(df)
 
         stats = analysis.get_stats(labels, unique_labels)
         output['overall'] = stats

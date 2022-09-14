@@ -1,7 +1,4 @@
-from cProfile import label
-import os
 import pandas as pd
-from datetime import datetime
 
 def get_stages(filename):
     with open(filename) as f:
@@ -12,7 +9,7 @@ def get_stages(filename):
 
     stages = []
     for line in lines:
-        [stage_id, t, stage_label] = line.split('\t')
+        _, t, stage_label = line.split('\t')
         stage_label = stage_label.replace('\n', '')
         stages.append({'t': t, 'label': stage_label.lower()})
 
@@ -59,9 +56,9 @@ def get_hyp_df(filename, settings):
         except:
             stage['label'] = settings['bad_label']
     
-    df = pd.DataFrame(data=stages)
+    hyp_df = pd.DataFrame(data=stages)
 
-    return df
+    return hyp_df
 
 def parse_timestamp(str : str):
     str, ms = str.split('.')
