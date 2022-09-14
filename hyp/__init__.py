@@ -57,6 +57,7 @@ def run():
                 '<SES>', _ses).replace('<RUN>', _run)
             filename = os.path.join(path, filename)
 
+            # STATS
             _labels, _unique_labels = analysis.get_labels(filename)
             _stats = analysis.get_stats(_labels, _unique_labels)
             output['runs']['run-' + _run] = _stats
@@ -68,6 +69,11 @@ def run():
                     unique_labels.append(label)
 
             labels.extend(_labels)
+
+            # DATAFRAME
+            stages = analysis.get_stages(filename)
+            for stage in stages:
+                analysis.parse_timestamp(stage['t'])
 
         stats = analysis.get_stats(labels, unique_labels)
         output['overall'] = stats

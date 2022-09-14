@@ -41,3 +41,16 @@ def get_stats(labels, unique_labels):
         stats[label]['perc'] = round(round(stats[label]['count'] / len(labels), 3) * 100, 1)
 
     return stats
+
+def parse_timestamp(str : str):
+    str, ms = str.split('.')
+    h, m, s = str.split(':')
+
+    h = int(h)
+    m = int(m)
+    s = int(s)
+    ms = int(ms)
+    
+    t = h * 60 * 60 * 1000 + m * 60 * 1000 + s * 1000 + ms
+
+    return t
