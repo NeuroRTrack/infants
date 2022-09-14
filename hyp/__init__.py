@@ -71,8 +71,16 @@ def run():
             labels.extend(_labels)
 
             # ANNOTATIONS
-            df = analysis.get_hyp_df(filename, settings)
-            print(df)
+            annotations = analysis.get_annotations(filename, settings)
+
+            annotations_dir = os.path.join(output_dir, settings['annotations_subdir'])
+            if not os.path.exists(annotations_dir):
+                os.makedirs(annotations_dir, exist_ok=False)
+            
+            filename = settings['filename'].replace(
+            '<SUB>', sub).replace('<SES>', _ses).replace('<RUN>', _run) + '_ann.csv'
+
+            annotations.to_csv(os.path.join(annotations_dir, filename), index=False)
 
         stats = analysis.get_stats(labels, unique_labels)
         output['overall'] = stats

@@ -1,7 +1,7 @@
 {
-  "sub": "05",
-  "ses": "33w",
-  "run": "01",
+  "sub": "15",
+  "ses": "all",
+  "run": "all",
   "output_dir": "./output",
   "dataset_dir": "../Shared/infants-dataset",
   "eeg_subdir": "sub-<SUB>/ses-<SES>/eeg/",
@@ -9,5 +9,7 @@
   "eeg_suffix": "_eeg.edf",
   "hyp_suffix": "_hyp.txt",
   "good_labels": ["ActiveSleep", "QuietSleep"],
-  "bad_label": "Bad"
+  "ignored_label": "Ignored",
+  "hyp_sampling_time": 20,
+  "annotations_subdir": "annotations"
 }

@@ -54,7 +54,7 @@ def get_hyp_df(filename, settings):
             idx = list(map(lambda label: label.lower(), settings['good_labels'])).index(stage['label'])
             stage['label'] = settings['good_labels'][idx]
         except:
-            stage['label'] = settings['bad_label']
+            stage['label'] = settings['ignored_label']
     
     hyp_df = pd.DataFrame(data=stages)
 
@@ -72,3 +72,12 @@ def parse_timestamp(str : str):
     t = (h * 60 * 60 * 1000 + m * 60 * 1000 + s * 1000 + ms) / 1000
 
     return t
+
+def get_annotations(filename, settings):
+    hyp_df = get_hyp_df(filename, settings)
+
+    annotations = hyp_df.rename(columns={'t': 'onset', 'label':'type'})
+    annotations['duration'] = settings['hyp_sampling_time']
+    annotations = annotations[['type', 'onset', 'duration']]
+
+    return annotations
