@@ -1,4 +1,7 @@
+from cProfile import label
 import os
+import pandas as pd
+from datetime import datetime
 
 def get_stages(filename):
     with open(filename) as f:
@@ -41,3 +44,20 @@ def get_stats(labels, unique_labels):
         stats[label]['perc'] = round(round(stats[label]['count'] / len(labels), 3) * 100, 1)
 
     return stats
+
+def get_hyp_df(filename, settings):
+    stages = get_stages(filename)
+
+    for stage in stages:
+        stage['t'] = datetime.now()
+
+        try:
+            idx = list(map(lambda label: label.lower(), settings['good_labels'])).index(stage['label'])
+            stage['label'] = settings['good_labels'][idx]
+        except:
+            stage['label'] = settings['bad_label']
+    
+    df = pd.DataFrame(data=stages)
+
+    print(df.to_string())
+

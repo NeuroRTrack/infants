@@ -1,11 +1,13 @@
 {
   "sub": "05",
-  "ses": "all",
-  "run": "all",
+  "ses": "33w",
+  "run": "01",
   "output_dir": "./output",
   "dataset_dir": "../Shared/infants-dataset",
   "eeg_subdir": "sub-<SUB>/ses-<SES>/eeg/",
   "filename": "sub-<SUB>_ses-<SES>_task-psg_run-<RUN>",
   "eeg_suffix": "_eeg.edf",
-  "hyp_suffix": "_hyp.txt"
+  "hyp_suffix": "_hyp.txt",
+  "good_labels": ["ActiveSleep", "QuietSleep"],
+  "bad_label": "Bad"
 }
