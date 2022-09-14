@@ -48,8 +48,10 @@ def get_stats(labels, unique_labels):
 def get_hyp_df(filename, settings):
     stages = get_stages(filename)
 
+    t0 = parse_timestamp(stages[0]['t'])
+
     for stage in stages:
-        stage['t'] = datetime.now()
+        stage['t'] = parse_timestamp(stage['t']) - t0
 
         try:
             idx = list(map(lambda label: label.lower(), settings['good_labels'])).index(stage['label'])
@@ -59,7 +61,7 @@ def get_hyp_df(filename, settings):
     
     df = pd.DataFrame(data=stages)
 
-    print(df.to_string())
+    return df
 
 def parse_timestamp(str : str):
     str, ms = str.split('.')
@@ -69,7 +71,7 @@ def parse_timestamp(str : str):
     m = int(m)
     s = int(s)
     ms = int(ms)
-    
-    t = h * 60 * 60 * 1000 + m * 60 * 1000 + s * 1000 + ms
+
+    t = (h * 60 * 60 * 1000 + m * 60 * 1000 + s * 1000 + ms) / 1000
 
     return t

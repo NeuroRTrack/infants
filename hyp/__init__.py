@@ -70,10 +70,8 @@ def run():
 
             labels.extend(_labels)
 
-            # DATAFRAME
-            stages = analysis.get_stages(filename)
-            for stage in stages:
-                analysis.parse_timestamp(stage['t'])
+            # ANNOTATIONS
+            df = analysis.get_hyp_df(filename, settings)
 
         stats = analysis.get_stats(labels, unique_labels)
         output['overall'] = stats
