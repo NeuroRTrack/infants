@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 def get_stages(filename):
     with open(filename) as f:
         lines = f.readlines()
@@ -14,6 +15,7 @@ def get_stages(filename):
         stages.append({'t': t, 'label': stage_label.lower()})
 
     return stages
+
 
 def get_labels(filename):
     stages = get_stages(filename)
@@ -32,15 +34,18 @@ def get_labels(filename):
 
     return labels, unique_labels
 
+
 def get_stats(labels, unique_labels):
     stats = {}
 
     for label in unique_labels:
         stats[label] = {}
         stats[label]['count'] = labels.count(label)
-        stats[label]['perc'] = round(round(stats[label]['count'] / len(labels), 3) * 100, 1)
+        stats[label]['perc'] = round(
+            round(stats[label]['count'] / len(labels), 3) * 100, 1)
 
     return stats
+
 
 def get_hyp_df(filename, settings):
     stages = get_stages(filename)
@@ -48,19 +53,22 @@ def get_hyp_df(filename, settings):
     t0 = parse_timestamp(stages[0]['t'])
 
     for stage in stages:
-        stage['t'] = parse_timestamp(stage['t']) - t0
+        stage['t'] = parse_timestamp(stage['t']) - t0 if (parse_timestamp(
+            stage['t']) - t0) >= 0 else parse_timestamp(stage['t']) - t0 + parse_timestamp('24:0:0.000')
 
         try:
-            idx = list(map(lambda label: label.lower(), settings['good_labels'])).index(stage['label'])
+            idx = list(map(lambda label: label.lower(),
+                       settings['good_labels'])).index(stage['label'])
             stage['label'] = settings['good_labels'][idx]
         except:
             stage['label'] = settings['ignored_label']
-    
+
     hyp_df = pd.DataFrame(data=stages)
 
     return hyp_df
 
-def parse_timestamp(str : str):
+
+def parse_timestamp(str: str):
     str, ms = str.split('.')
     h, m, s = str.split(':')
 
@@ -73,10 +81,11 @@ def parse_timestamp(str : str):
 
     return t
 
+
 def get_annotations(filename, settings):
     hyp_df = get_hyp_df(filename, settings)
 
-    annotations = hyp_df.rename(columns={'t': 'onset', 'label':'type'})
+    annotations = hyp_df.rename(columns={'t': 'onset', 'label': 'type'})
     annotations['duration'] = settings['hyp_sampling_time']
     annotations = annotations[['type', 'onset', 'duration']]
 

@@ -1,5 +1,5 @@
 {
-  "sub": "15",
+  "sub": "05",
   "ses": "all",
   "run": "all",
   "output_dir": "./output",
@@ -8,6 +8,7 @@
   "filename": "sub-<SUB>_ses-<SES>_task-psg_run-<RUN>",
   "eeg_suffix": "_eeg.edf",
   "hyp_suffix": "_hyp.txt",
+  "annotations_suffix": "_ann.csv",
   "good_labels": ["ActiveSleep", "QuietSleep"],
   "ignored_label": "Ignored",
   "hyp_sampling_time": 20,
