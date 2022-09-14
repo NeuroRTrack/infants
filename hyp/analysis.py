@@ -61,3 +61,15 @@ def get_hyp_df(filename, settings):
 
     print(df.to_string())
 
+def parse_timestamp(str : str):
+    str, ms = str.split('.')
+    h, m, s = str.split(':')
+
+    h = int(h)
+    m = int(m)
+    s = int(s)
+    ms = int(ms)
+    
+    t = h * 60 * 60 * 1000 + m * 60 * 1000 + s * 1000 + ms
+
+    return t
