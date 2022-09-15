@@ -52,10 +52,7 @@ def run():
             run = [run]
 
         for _run in run:
-            filename = settings['general']['filename'] + settings['hyp']['suffix']
-
-            filename = filename.replace('<SUB>', sub).replace(
-                '<SES>', _ses).replace('<RUN>', _run)
+            filename = utils.get_filename(settings, _ses, _run, settings['hyp']['suffix'])
             filename = os.path.join(path, filename)
 
             # STATS
@@ -79,8 +76,7 @@ def run():
             if not os.path.exists(annotations_dir):
                 os.makedirs(annotations_dir, exist_ok=False)
 
-            filename = settings['general']['filename'].replace(
-                '<SUB>', sub).replace('<SES>', _ses).replace('<RUN>', _run) + settings['hyp']['annotations_suffix']
+            filename = utils.get_filename(settings, _ses, _run, settings['hyp']['annotations_suffix'])
 
             annotations.to_csv(os.path.join(
                 annotations_dir, filename), index=False)
@@ -88,8 +84,7 @@ def run():
         stats = analysis.get_stats(labels, unique_labels)
         output['overall'] = stats
 
-        filename, _ = settings['general']['filename'].replace(
-            '<SUB>', sub).replace('<SES>', _ses).split('_run')
+        filename = utils.get_filename(settings, _ses, suffix='_stats.json')
 
-        with open(os.path.join(output_dir, filename + '_stats.json'), 'w') as f:
+        with open(os.path.join(output_dir, filename), 'w') as f:
             json.dump(output, f)
