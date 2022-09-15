@@ -7,12 +7,12 @@ import utils
 def run():
     settings = json.load(open('./settings.json'))
 
-    sub = settings['sub']
-    ses = settings['ses']
+    sub = settings['general']['sub']
+    ses = settings['general']['ses']
 
     if (ses == 'all') or (ses == ['all']):
         ses = []
-        path = os.path.join(settings['dataset_dir'], settings['eeg_subdir'].split('ses')[0].replace(
+        path = os.path.join(settings['general']['dataset_dir'], settings['general']['eeg_subdir'].split('ses')[0].replace(
             '<SUB>', sub))
 
         for file in os.listdir(path):
@@ -24,9 +24,9 @@ def run():
         ses = [ses]
 
     for _ses in ses:
-        run = settings['run']
+        run = settings['general']['run']
 
-        output_dir = utils.create_output_dir(settings['output_dir'], sub, _ses)
+        output_dir = utils.create_output_dir(settings['general']['output_dir'], sub, _ses)
 
         labels = []
         unique_labels = []
@@ -37,13 +37,13 @@ def run():
         output['overall'] = {}
         output['runs'] = {}
 
-        path = os.path.join(settings['dataset_dir'], settings['eeg_subdir'].replace(
+        path = os.path.join(settings['general']['dataset_dir'], settings['general']['eeg_subdir'].replace(
             '<SUB>', sub).replace('<SES>', _ses))
 
         if (run == 'all') or (run == ['all']):
             run = []
             for file in os.listdir(path):
-                if file.endswith(settings['hyp_suffix']):
+                if file.endswith(settings['hyp']['suffix']):
                     _, _, _, _run, _ = file.split('_')
                     _, _run = _run.split('-')
                     run.append(_run)
@@ -52,7 +52,7 @@ def run():
             run = [run]
 
         for _run in run:
-            filename = settings['filename'] + settings['hyp_suffix']
+            filename = settings['general']['filename'] + settings['hyp']['suffix']
 
             filename = filename.replace('<SUB>', sub).replace(
                 '<SES>', _ses).replace('<RUN>', _run)
@@ -75,12 +75,12 @@ def run():
             annotations = analysis.get_annotations(filename, settings)
 
             annotations_dir = os.path.join(
-                output_dir, settings['annotations_subdir'])
+                output_dir, settings['hyp']['annotations_subdir'])
             if not os.path.exists(annotations_dir):
                 os.makedirs(annotations_dir, exist_ok=False)
 
-            filename = settings['filename'].replace(
-                '<SUB>', sub).replace('<SES>', _ses).replace('<RUN>', _run) + settings['annotations_suffix']
+            filename = settings['general']['filename'].replace(
+                '<SUB>', sub).replace('<SES>', _ses).replace('<RUN>', _run) + settings['hyp']['annotations_suffix']
 
             annotations.to_csv(os.path.join(
                 annotations_dir, filename), index=False)
@@ -88,7 +88,7 @@ def run():
         stats = analysis.get_stats(labels, unique_labels)
         output['overall'] = stats
 
-        filename, _ = settings['filename'].replace(
+        filename, _ = settings['general']['filename'].replace(
             '<SUB>', sub).replace('<SES>', _ses).split('_run')
 
         with open(os.path.join(output_dir, filename + '_stats.json'), 'w') as f:

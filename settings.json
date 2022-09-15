@@ -1,16 +1,30 @@
 {
-  "sub": "05",
-  "ses": "all",
-  "run": "all",
-  "output_dir": "./output",
-  "dataset_dir": "../Shared/infants-dataset",
-  "eeg_subdir": "sub-<SUB>/ses-<SES>/eeg/",
-  "filename": "sub-<SUB>_ses-<SES>_task-psg_run-<RUN>",
-  "eeg_suffix": "_eeg.edf",
-  "hyp_suffix": "_hyp.txt",
-  "annotations_suffix": "_ann.csv",
-  "good_labels": ["ActiveSleep", "QuietSleep"],
-  "ignored_label": "Ignored",
-  "hyp_sampling_time": 20,
-  "annotations_subdir": "annotations"
+  "general":
+  {
+    "sub": "05",
+    "ses": "all",
+    "run": "all",
+    "output_dir": "./output",
+    "dataset_dir": "../Shared/infants-dataset",
+    "eeg_subdir": "sub-<SUB>/ses-<SES>/eeg/",
+    "filename": "sub-<SUB>_ses-<SES>_task-psg_run-<RUN>"
+  },
+
+
+    "hyp":
+  {
+    "suffix": "_hyp.txt",
+    "annotations_suffix": "_ann.csv",
+    "good_labels": ["ActiveSleep", "QuietSleep"],
+    "ignored_label": "Ignored",
+    "sampling_time": 20,
+    "annotations_subdir": "annotations"
+  },
+
+
+  "eeg":
+  {
+    "suffix": "_eeg.edf",
+    "sampling_frequency": 512
+  }
 }

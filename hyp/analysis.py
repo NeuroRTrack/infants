@@ -58,10 +58,10 @@ def get_hyp_df(filename, settings):
 
         try:
             idx = list(map(lambda label: label.lower(),
-                       settings['good_labels'])).index(stage['label'])
-            stage['label'] = settings['good_labels'][idx]
+                       settings['hyp']['good_labels'])).index(stage['label'])
+            stage['label'] = settings['hyp']['good_labels'][idx]
         except:
-            stage['label'] = settings['ignored_label']
+            stage['label'] = settings['hyp']['ignored_label']
 
     hyp_df = pd.DataFrame(data=stages)
 
@@ -86,7 +86,8 @@ def get_annotations(filename, settings):
     hyp_df = get_hyp_df(filename, settings)
 
     annotations = hyp_df.rename(columns={'t': 'onset', 'label': 'type'})
-    annotations['duration'] = settings['hyp_sampling_time']
+    annotations['duration'] = settings['hyp']['sampling_time']
     annotations = annotations[['type', 'onset', 'duration']]
 
     return annotations
+
