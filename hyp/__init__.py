@@ -10,15 +10,10 @@ def run():
     sub = settings['general']['sub']
     ses = settings['general']['ses']
 
-    if (ses == 'all') or (ses == ['all']):
-        ses = []
-        path = os.path.join(settings['general']['dataset_dir'], settings['general']['eeg_subdir'].split('ses')[0].replace(
+    path = os.path.join(settings['general']['dataset_dir'], settings['general']['eeg_subdir'].split('ses')[0].replace(
             '<SUB>', sub))
 
-        for file in os.listdir(path):
-            if file.endswith('w'):
-                _, _ses = file.split('-')
-                ses.append(_ses)
+    ses = utils.check_all_setting(ses, 'ses', 'w', path)
 
     if type(ses) is str:
         ses = [ses]
@@ -39,14 +34,8 @@ def run():
 
         path = os.path.join(settings['general']['dataset_dir'], settings['general']['eeg_subdir'].replace(
             '<SUB>', sub).replace('<SES>', _ses))
-
-        if (run == 'all') or (run == ['all']):
-            run = []
-            for file in os.listdir(path):
-                if file.endswith(settings['hyp']['suffix']):
-                    _, _, _, _run, _ = file.split('_')
-                    _, _run = _run.split('-')
-                    run.append(_run)
+        
+        run = utils.check_all_setting(run, 'run', settings['hyp']['suffix'], path)
 
         if type(run) is str:
             run = [run]

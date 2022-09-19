@@ -1,6 +1,7 @@
 import os
 import re
 
+
 def create_output_dir(output_dir, sub, ses):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir, exist_ok=False)
@@ -15,9 +16,11 @@ def create_output_dir(output_dir, sub, ses):
 
     return output_dir
 
+
 def get_filename(settings, ses=None, run=None, suffix=None):
-    filename = settings['general']['filename'].replace('<SUB>', settings['general']['sub'])
-    
+    filename = settings['general']['filename'].replace(
+        '<SUB>', settings['general']['sub'])
+
     if ses is None: ses = settings['general']['ses']
     if run is None: run = settings['general']['run']
 
@@ -38,3 +41,16 @@ def get_filename(settings, ses=None, run=None, suffix=None):
 
     return filename
 
+
+def check_all_setting(var, sep:str, suffix: str, path: str):
+    if (var == 'all') or (var == ['all']):
+        var = []
+        for file in os.listdir(path):
+            if file.endswith(suffix):
+                _, _var = file.split(sep)
+                _var = _var.split('_')[0]
+                _var = _var.replace('-', '')
+                # _, _, _, _var, _ = file.split('_')
+                # _, _var = _var.split('-')
+                var.append(_var)
+    return var
