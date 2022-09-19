@@ -15,9 +15,6 @@ def run():
 
     ses = utils.check_all_setting(ses, 'ses', 'w', path)
 
-    if type(ses) is str:
-        ses = [ses]
-
     for _ses in ses:
         run = settings['general']['run']
 
@@ -36,9 +33,6 @@ def run():
             '<SUB>', sub).replace('<SES>', _ses))
         
         run = utils.check_all_setting(run, 'run', settings['hyp']['suffix'], path)
-
-        if type(run) is str:
-            run = [run]
 
         for _run in run:
             filename = utils.get_filename(settings, _ses, _run, settings['hyp']['suffix'])

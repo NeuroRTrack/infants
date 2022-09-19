@@ -50,7 +50,8 @@ def check_all_setting(var, sep:str, suffix: str, path: str):
                 _, _var = file.split(sep)
                 _var = _var.split('_')[0]
                 _var = _var.replace('-', '')
-                # _, _, _, _var, _ = file.split('_')
-                # _, _var = _var.split('-')
                 var.append(_var)
+
+    if type(var) is str:
+        var = [var]
     return var
