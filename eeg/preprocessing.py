@@ -1,4 +1,3 @@
-import os
 import mne
 
 def preprocess_data(eeg_filename, ann_filename, settings):
@@ -9,7 +8,14 @@ def preprocess_data(eeg_filename, ann_filename, settings):
     ch_names = raw.ch_names[-8:]
     raw = raw.pick_channels(ch_names)
 
-    raw = raw.notch_filter(settings['eeg']['notch_freq'])
+    raw = raw.notch_filter(settings['eeg']['notch_freq'], verbose=False)
+
+    annotations = mne.read_annotations(ann_filename)
+    annotations = mne.Annotations(annotations.onset * 1e9, annotations.duration, annotations.description, orig_time=raw.info['meas_date'])
+
+    raw = raw.set_annotations(annotations, emit_warning=False, verbose=False)
+
+    raw.plot()
 
     return raw
 

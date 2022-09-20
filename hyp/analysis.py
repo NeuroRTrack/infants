@@ -85,9 +85,9 @@ def parse_timestamp(str: str):
 def get_annotations(filename, settings):
     hyp_df = get_hyp_df(filename, settings)
 
-    annotations = hyp_df.rename(columns={'t': 'onset', 'label': 'type'})
+    annotations = hyp_df.rename(columns={'t': 'onset', 'label': 'description'})
     annotations['duration'] = settings['hyp']['sampling_time']
-    annotations = annotations[['type', 'onset', 'duration']]
+    annotations = annotations[['description', 'onset', 'duration']]
 
     return annotations
 
