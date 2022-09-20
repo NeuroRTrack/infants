@@ -2,3 +2,4 @@ infants-dataset
 output
 
 *.pyc
+__pycache__
