@@ -24,7 +24,8 @@ def preprocess_data(eeg_filename, ann_filename, settings):
 
 
 def concat_epochs(epochs_list):
-    concatenated_epochs = mne.concatenate_epochs(epochs_list)
+    with utils.IgnoreWarnings('Annotations'):
+        concatenated_epochs = mne.concatenate_epochs(epochs_list, verbose=False)
 
     return concatenated_epochs
 
