@@ -13,9 +13,10 @@ def preprocess_data(eeg_filename, ann_filename, settings):
 
     raw = raw.notch_filter(settings['eeg']['notch_freq'], verbose=False)
 
-    annotations = mne.read_annotations(ann_filename)
-    annotations = mne.Annotations(annotations.onset * 1e9, annotations.duration,
-                                    annotations.description, orig_time=raw.info['meas_date'])
+    with utils.IgnoreWarnings('MILLISECONDS'):
+        annotations = mne.read_annotations(ann_filename)
+        annotations = mne.Annotations(annotations.onset * 1e9, annotations.duration,
+                                      annotations.description, orig_time=raw.info['meas_date'])
 
     raw = raw.set_annotations(annotations, emit_warning=False, verbose=False)
 
