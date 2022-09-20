@@ -21,3 +21,26 @@ def preprocess_data(eeg_filename, ann_filename, settings):
     raw = raw.set_annotations(annotations, emit_warning=False, verbose=False)
 
     return raw
+
+
+def concat_epochs(epochs_list):
+    concatenated_epochs = mne.concatenate_epochs(epochs_list)
+
+    return concatenated_epochs
+
+
+def get_epochs_from_annotations(raw, labels: str | list, chunk_duration):
+    if type(labels) is str:
+        labels = [labels]
+
+    event_id = {}
+    for idx in range(len(labels)):
+        event_id[labels[idx]] = idx + 1
+
+    events, event_id = mne.events_from_annotations(
+        raw, event_id=event_id, chunk_duration=chunk_duration, verbose=False)
+
+    epochs = mne.Epochs(raw, events, event_id=event_id, tmin=0,
+                        tmax=chunk_duration, baseline=None, preload=True, verbose=False)
+
+    return epochs

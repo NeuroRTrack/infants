@@ -36,6 +36,12 @@ def run():
             ann_filename = utils.get_filename(settings, _ses, _run, settings['hyp']['annotations_suffix'])
             ann_filename = os.path.join(annotations_dir, ann_filename)
 
-            data[_ses].append(preprocessing.preprocess_data(eeg_filename, ann_filename, settings))
-            
+            raw = preprocessing.preprocess_data(eeg_filename, ann_filename, settings)
+            epochs = preprocessing.get_epochs_from_annotations(raw, settings['hyp']['good_labels'], settings['hyp']['sampling_time'])
+            data[_ses].append(epochs)
 
+        epochs = preprocessing.concat_epochs(data[_ses])
+
+        for idx in range(len(epochs.event_id)):
+            fig = epochs[idx].plot_psd(fmin=0.1, fmax=100, spatial_colors=False)
+            fig.axes[0].set_title(list(epochs.event_id.keys())[idx])

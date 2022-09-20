@@ -3,7 +3,7 @@
   {
     "sub": "05",
     "ses": "34w",
-    "run": ["01", "02"],
+    "run": "all",
     "output_dir": "./output",
     "dataset_dir": "../Shared/infants-dataset",
     "eeg_subdir": "sub-<SUB>/ses-<SES>/eeg/",
