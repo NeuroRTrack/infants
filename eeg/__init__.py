@@ -2,6 +2,7 @@ import os
 import json
 import utils
 import eeg.preprocessing as preprocessing
+from tqdm import tqdm
 
 def run():
     settings = json.load(open('./settings.json'))
@@ -26,7 +27,7 @@ def run():
         
         run = utils.check_all_setting(run, 'run', settings['eeg']['suffix'], path)
 
-        for _run in run:
+        for _run in tqdm(run):
             eeg_filename = utils.get_filename(settings, _ses, _run, settings['eeg']['suffix'])
             eeg_filename = os.path.join(path, eeg_filename)
 
