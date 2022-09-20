@@ -1,7 +1,10 @@
 import mne
+import utils
+
 
 def preprocess_data(eeg_filename, ann_filename, settings):
-    raw = mne.io.read_raw_edf(eeg_filename, preload=True, infer_types=True, verbose=False)
+    raw = mne.io.read_raw_edf(
+        eeg_filename, preload=True, infer_types=True, verbose=False)
 
     raw = mne.set_bipolar_reference(raw, settings['eeg']['montage']['anode'],
                                     settings['eeg']['montage']['cathode'], verbose=False)
@@ -11,11 +14,9 @@ def preprocess_data(eeg_filename, ann_filename, settings):
     raw = raw.notch_filter(settings['eeg']['notch_freq'], verbose=False)
 
     annotations = mne.read_annotations(ann_filename)
-    annotations = mne.Annotations(annotations.onset * 1e9, annotations.duration, annotations.description, orig_time=raw.info['meas_date'])
+    annotations = mne.Annotations(annotations.onset * 1e9, annotations.duration,
+                                    annotations.description, orig_time=raw.info['meas_date'])
 
     raw = raw.set_annotations(annotations, emit_warning=False, verbose=False)
 
-    raw.plot()
-
     return raw
-

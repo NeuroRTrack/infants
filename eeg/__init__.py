@@ -1,5 +1,4 @@
 import os
-import eeg.analysis as analysis
 import json
 import utils
 import eeg.preprocessing as preprocessing
