@@ -2,7 +2,7 @@
   "general":
   {
     "sub": "05",
-    "ses": "34w",
+    "ses": "all",
     "run": "all",
     "output_dir": "./output",
     "dataset_dir": "../Shared/infants-dataset",
