@@ -65,4 +65,7 @@ def check_all_setting(var, sep:str, suffix: str, path: str):
 
     if type(var) is str:
         var = [var]
+
+    var.sort()
+    
     return var
