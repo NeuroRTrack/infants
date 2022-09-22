@@ -1,4 +1,6 @@
 import pandas as pd
+import datetime
+import numpy as np
 
 
 def get_stages(filename):
@@ -16,6 +18,19 @@ def get_stages(filename):
 
     return stages
 
+def get_start_date(filename):
+    with open(filename) as f:
+        lines = f.readlines()
+    
+    idxs = [idx for idx, line in enumerate(lines) if 'Recording: Startdate' in line]
+    idx = idxs[0] + 1
+
+    _, date, _, time = lines[idx].split(' ')
+    date = date + '_' + time.replace('\n', '')
+
+    date = datetime.datetime.strptime(date, '%d.%m.%y_%H.%M.%S')
+
+    return date
 
 def get_labels(filename):
     stages = get_stages(filename)
@@ -48,6 +63,7 @@ def get_stats(labels, unique_labels):
 
 
 def get_hyp_df(filename, settings):
+    start_date = get_start_date(filename)
     stages = get_stages(filename)
 
     t0 = parse_timestamp(stages[0]['t'])
@@ -62,10 +78,12 @@ def get_hyp_df(filename, settings):
             stage['label'] = settings['hyp']['good_labels'][idx]
         except:
             stage['label'] = settings['hyp']['ignored_label']
+        
+        stage['date'] = start_date + datetime.timedelta(seconds=stage['t'])
 
     hyp_df = pd.DataFrame(data=stages)
 
-    return hyp_df
+    return hyp_df.copy()
 
 
 def parse_timestamp(str: str):
@@ -91,3 +109,48 @@ def get_annotations(filename, settings):
 
     return annotations
 
+def normalize_dataframe(df, tolerance = 45):
+    if int(df['date'][df.index[0]].strftime('%M')) <= 60 - tolerance: df = truncate_dataframe(df)
+    else: df = truncate_dataframe(df)
+
+    if int(df['date'][df.index[-1]].strftime('%M')) >= tolerance: df = truncate_dataframe(df, flip=True)
+    else: df = truncate_dataframe(df, flip=True)
+
+    return df
+
+def truncate_dataframe(df, flip : bool = False):
+    if flip is False:
+        h0 = int(df['date'][df.index[0]].strftime('%H'))
+        
+        for idx, value in df.iterrows():
+            h = int(value['date'].strftime('%H'))
+            if h != h0:
+                df = df.truncate(before=idx)
+                break
+    else:
+        h0 = int(df['date'][df.index[-1]].strftime('%H'))
+        df = df.iloc[::-1]
+        
+        for idx, value in df.iterrows():
+            h = int(value['date'].strftime('%H'))
+            if h != h0:
+                df = df.truncate(after=idx)
+                break
+
+        df = df.iloc[::-1]
+
+    return df
+
+def count_full_hours(df):
+    hours = np.zeros(24)
+
+    h0 = int(df['date'][df.index[0]].strftime('%H'))
+    hours[h0] = 1
+
+    for _, value in df.iterrows():
+        h = int(value['date'].strftime('%H'))
+        if h != h0:
+            h0 = h
+            hours[h0] = hours[h0] + 1
+
+    return hours
