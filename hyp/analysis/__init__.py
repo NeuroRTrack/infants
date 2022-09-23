@@ -18,11 +18,13 @@ def get_stages(filename):
 
     return stages
 
+
 def get_start_date(filename):
     with open(filename) as f:
         lines = f.readlines()
-    
-    idxs = [idx for idx, line in enumerate(lines) if 'Recording: Startdate' in line]
+
+    idxs = [idx for idx, line in enumerate(
+        lines) if 'Recording: Startdate' in line]
     idx = idxs[0] + 1
 
     _, date, _, time = lines[idx].split(' ')
@@ -31,6 +33,7 @@ def get_start_date(filename):
     date = datetime.datetime.strptime(date, '%d.%m.%y_%H.%M.%S')
 
     return date
+
 
 def get_labels(filename):
     stages = get_stages(filename)
@@ -78,7 +81,7 @@ def get_hyp_df(filename, settings):
             stage['label'] = settings['hyp']['good_labels'][idx]
         except:
             stage['label'] = settings['hyp']['ignored_label']
-        
+
         stage['date'] = start_date + datetime.timedelta(seconds=stage['t'])
 
     hyp_df = pd.DataFrame(data=stages)
@@ -109,19 +112,25 @@ def get_annotations(filename, settings):
 
     return annotations
 
-def normalize_dataframe(df, tolerance = 45):
-    if int(df['date'][df.index[0]].strftime('%M')) <= 60 - tolerance: df = truncate_dataframe(df)
-    else: df = truncate_dataframe(df)
 
-    if int(df['date'][df.index[-1]].strftime('%M')) >= tolerance: df = truncate_dataframe(df, flip=True)
-    else: df = truncate_dataframe(df, flip=True)
+def normalize_dataframe(df, settings, tolerance=45):
+    if int(df['date'][df.index[0]].strftime('%M')) <= 60 - tolerance:
+        df = pad_dataframe(df, settings)
+    else:
+        df = truncate_dataframe(df)
+
+    if int(df['date'][df.index[-1]].strftime('%M')) >= tolerance:
+        df = pad_dataframe(df, settings, flip=True)
+    else:
+        df = truncate_dataframe(df, flip=True)
 
     return df
 
-def truncate_dataframe(df, flip : bool = False):
+
+def truncate_dataframe(df, flip: bool = False):
     if flip is False:
         h0 = int(df['date'][df.index[0]].strftime('%H'))
-        
+
         for idx, value in df.iterrows():
             h = int(value['date'].strftime('%H'))
             if h != h0:
@@ -130,7 +139,7 @@ def truncate_dataframe(df, flip : bool = False):
     else:
         h0 = int(df['date'][df.index[-1]].strftime('%H'))
         df = df.iloc[::-1]
-        
+
         for idx, value in df.iterrows():
             h = int(value['date'].strftime('%H'))
             if h != h0:
@@ -140,6 +149,25 @@ def truncate_dataframe(df, flip : bool = False):
         df = df.iloc[::-1]
 
     return df
+
+
+def pad_dataframe(df, settings, flip: bool = False):
+    h0 = df['date'][df.index[0]]
+    h_end = df['date'][df.index[-1]]
+
+    if flip is False:
+        df_h = pd.DataFrame({'label': settings['hyp']['ignored_label'],
+                             'date': pd.date_range(start=h0 - datetime.timedelta(hours=1), end=h0, freq=str(settings['hyp']['sampling_time']) + 'S')})
+        df = pd.concat([df_h, df], ignore_index=True)
+    else:
+        df_h = pd.DataFrame({'label': settings['hyp']['ignored_label'],
+                             'date': pd.date_range(start=h_end, end=h_end + datetime.timedelta(hours=1), freq=str(settings['hyp']['sampling_time']) + 'S')})
+        df = pd.concat([df, df_h], ignore_index=True)
+
+    df = truncate_dataframe(df, flip=flip)
+
+    return df
+
 
 def count_full_hours(df):
     hours = np.zeros(24)
