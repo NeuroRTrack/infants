@@ -89,16 +89,19 @@ def _pad_dataframe(df, settings, flip: bool = False):
     return df
 
 
-def count_full_hours(df):
+def count_full_hours(df, settings, tolerance : int = 45):
+    tolerance = (tolerance * 60) / settings['hyp']['sampling_time']
     hours = np.zeros(24)
 
     h0 = int(df['date'][df.index[0]].strftime('%H'))
-    hours[h0] = 1
+    start_idx = 0
 
-    for _, value in df.iterrows():
+    for idx, value in df.iterrows():
         h = int(value['date'].strftime('%H'))
-        if h != h0:
+        if (h != h0) or (idx == len(df.index) - 1):
+            if idx - start_idx >= tolerance:
+                hours[h0] = hours[h0] + 1
             h0 = h
-            hours[h0] = hours[h0] + 1
+            start_idx = idx
 
     return hours
