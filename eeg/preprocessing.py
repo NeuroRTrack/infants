@@ -2,15 +2,40 @@ import mne
 import numpy as np
 import utils
 
+def _get_referenced_channels_names(settings):
+    anodes = settings['eeg']['montage']['anode']
+    cathodes = settings['eeg']['montage']['cathode']
+
+    ch_names = []
+
+    for idx, _ in enumerate(anodes):
+        ch_name = str(anodes[idx]) + '-' + str(cathodes[idx])
+        ch_names.append(ch_name)
+
+    return ch_names
+
+
+def _check_already_referenced(raw, settings):
+    is_referenced = False    
+
+    referenced_ch_names = _get_referenced_channels_names(settings)
+    idxs = mne.pick_channels(raw.ch_names, include=referenced_ch_names)
+
+    if len(idxs) == len(referenced_ch_names):
+        is_referenced = True
+
+    return is_referenced
+
 
 def preprocess_data(eeg_filename, ann_filename, settings):
     raw = mne.io.read_raw_edf(
         eeg_filename, preload=True, infer_types=True, verbose=False)
 
-    raw = mne.set_bipolar_reference(raw, settings['eeg']['montage']['anode'],
-                                    settings['eeg']['montage']['cathode'], verbose=False)
-    ch_names = raw.ch_names[-8:]
-    raw = raw.pick_channels(ch_names)
+    if _check_already_referenced(raw, settings) is False:
+        raw = mne.set_bipolar_reference(raw, settings['eeg']['montage']['anode'],
+                                        settings['eeg']['montage']['cathode'], verbose=False)
+
+    raw = raw.pick_channels(_get_referenced_channels_names(settings))
 
     raw = raw.notch_filter(settings['eeg']['notch_freq'], verbose=False)
 
