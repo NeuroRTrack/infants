@@ -70,7 +70,7 @@ def get_annotations(filename, settings):
 
 def count_stages_per_hour(df, settings, description : str = 'Wake', min_duration : float = 300):
     min_duration = round(min_duration/settings['hyp']['sampling_time'])
-    hours = np.zeros(24)
+    counts = np.zeros(24)
 
     h0 = int(df['date'][df.index[0]].strftime('%H'))
     
@@ -80,7 +80,7 @@ def count_stages_per_hour(df, settings, description : str = 'Wake', min_duration
         h = int(value['date'].strftime('%H'))
         if h != h0:
             if (start_idx is not None) and (idx - start_idx >= min_duration):
-                hours[h0] = hours[h0] + 1
+                counts[h0] = counts[h0] + 1
             if value['description'] == description: 
                 start_idx = idx
             else:
@@ -91,13 +91,14 @@ def count_stages_per_hour(df, settings, description : str = 'Wake', min_duration
             if start_idx is not None:
                 if (value['description'] != description) or (idx == len(df.index) - 1):
                     if idx - start_idx >= min_duration:
-                        hours[h0] = hours[h0] + 1
+                        counts[h0] = counts[h0] + 1
                     start_idx = None
             else:
                 if value['description'] == description:
                     start_idx = idx
 
-    return hours
+    return counts
+
 
 
 
