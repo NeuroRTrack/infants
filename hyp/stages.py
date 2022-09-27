@@ -2,7 +2,7 @@ import datetime
 from tracemalloc import start
 import numpy as np
 import pandas as pd
-from .time import get_start_date, parse_timestamp
+from .time import get_start_date, parse_timestamp, count_full_hours
 
 
 def get_stages(filename):
@@ -100,5 +100,15 @@ def count_stages_per_hour(df, settings, description : str = 'Wake', min_duration
     return counts
 
 
+def get_stage_cycle(df, settings, description : str = 'Wake', tolerance = 45):
+    hours = count_full_hours(df, settings, tolerance)
+    counts = np.zeros(24)
 
+    for _, value in df.iterrows():
+        h = int(value['date'].strftime('%H'))
+        if (hours[h] != 0) and (value['description'] == description):
+            counts[h] = counts[h] + 1
 
+    # TODO: normalizzare sul numero di samples in un'ora (così è tra 0 e 1)
+
+    return counts
