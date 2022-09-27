@@ -1,5 +1,7 @@
-import pandas as pd
 import datetime
+from tracemalloc import start
+import numpy as np
+import pandas as pd
 from .time import get_start_date, parse_timestamp
 
 
@@ -64,3 +66,38 @@ def get_annotations(filename, settings):
     annotations = annotations[['description', 'onset', 'duration']]
 
     return annotations
+
+
+def count_stages_per_hour(df, settings, description : str = 'Wake', min_duration : float = 300):
+    min_duration = round(min_duration/settings['hyp']['sampling_time'])
+    hours = np.zeros(24)
+
+    h0 = int(df['date'][df.index[0]].strftime('%H'))
+    
+    start_idx = 0 if df['description'][df.index[0]] == description else None
+
+    for idx, value in df.iterrows():
+        h = int(value['date'].strftime('%H'))
+        if h != h0:
+            if (start_idx is not None) and (idx - start_idx >= min_duration):
+                hours[h0] = hours[h0] + 1
+            if value['description'] == description: 
+                start_idx = idx
+            else:
+                start_idx = None
+            
+            h0 = h
+        else:
+            if start_idx is not None:
+                if (value['description'] != description) or (idx == len(df.index) - 1):
+                    if idx - start_idx >= min_duration:
+                        hours[h0] = hours[h0] + 1
+                    start_idx = None
+            else:
+                if value['description'] == description:
+                    start_idx = idx
+
+    return hours
+
+
+
