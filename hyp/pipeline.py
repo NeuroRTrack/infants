@@ -13,7 +13,7 @@ def run(settings):
     path = os.path.join(settings['general']['dataset_dir'], settings['general']['eeg_subdir'].split('ses')[0].replace(
         '<SUB>', sub))
 
-    ses = utils.check_all_setting(ses, 'ses', 'w', path)
+    ses = utils.check_all_setting(ses, 'ses', path, suffix='w')
 
     for _ses in ses:
         output_dir = utils.create_output_dir(
@@ -32,7 +32,7 @@ def run(settings):
             '<SUB>', sub).replace('<SES>', _ses))
 
         run = utils.check_all_setting(
-            run, 'run', settings['hyp']['suffix'], path)
+            run, 'run', path, suffix=settings['hyp']['suffix'])
 
         for _run in run:
             filename = utils.get_filename(

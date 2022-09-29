@@ -11,7 +11,7 @@ def run(settings):
     path = os.path.join(settings['general']['dataset_dir'], settings['general']['eeg_subdir'].split('ses')[0].replace(
             '<SUB>', sub))
     
-    ses = utils.check_all_setting(ses, 'ses', 'w', path)
+    ses = utils.check_all_setting(ses, 'ses', path, suffix='w')
 
     for _ses in tqdm(ses, desc='Sessions', unit='ses'):
         run = settings['general']['run']
@@ -22,7 +22,7 @@ def run(settings):
         path = os.path.join(settings['general']['dataset_dir'], settings['general']['eeg_subdir'].replace(
             '<SUB>', sub).replace('<SES>', _ses))
         
-        run = utils.check_all_setting(run, 'run', settings['eeg']['suffix'], path)
+        run = utils.check_all_setting(run, 'run', path, suffix=settings['eeg']['suffix'])
 
         for _run in tqdm(run, desc='Session ' + _ses + ' - Runs', leave=False, unit='run'):
             eeg_filename = utils.get_filename(settings, _ses, _run, settings['eeg']['suffix'])
