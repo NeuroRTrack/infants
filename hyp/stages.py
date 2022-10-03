@@ -1,5 +1,4 @@
 import datetime
-from tracemalloc import start
 import numpy as np
 import pandas as pd
 from .time import get_start_date, parse_timestamp, count_full_hours
@@ -68,7 +67,7 @@ def get_annotations(filename, settings):
     return annotations
 
 
-def count_stages_per_hour(df, settings, description : str = 'Wake', min_duration : float = 300):
+def count_adjacent_stages_per_hour(df, settings, description : str = 'Wake', min_duration : float = 300):
     min_duration = round(min_duration/settings['hyp']['sampling_time'])
     counts = np.zeros(24)
 
