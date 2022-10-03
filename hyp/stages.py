@@ -100,15 +100,34 @@ def count_stages_per_hour(df, settings, description : str = 'Wake', min_duration
     return counts
 
 
-def get_stage_cycle(df, settings, description : str = 'Wake', tolerance = 45):
+def get_stage_cycle(df, settings, description : str = 'Wake', normalized = True, tolerance = 45):
+    if type(description) is str:
+        description = [description]
+
     hours = count_full_hours(df, settings, tolerance)
     counts = np.zeros(24)
 
     for _, value in df.iterrows():
         h = int(value['date'].strftime('%H'))
-        if (hours[h] != 0) and (value['description'] == description):
+        if (hours[h] != 0) and (value['description'] in description):
             counts[h] = counts[h] + 1
 
-    # TODO: normalizzare sul numero di samples in un'ora (così è tra 0 e 1)
+    if normalized is True:
+        total_counts = np.zeros(24)
+        h0 = df['date'][df.index[0]]
+        h0 = h0 - datetime.timedelta(minutes=h0.minute, seconds=h0.second)
+
+        h_end = df['date'][df.index[-1]]
+        h_end = h_end - datetime.timedelta(minutes=h0.minute, seconds=h0.second) + datetime.timedelta(hours=1)
+
+        while h0 < h_end:
+            idx = h0.hour
+
+            _df = df.loc[(df['date'] >= h0) & (df['date'] < h0 + datetime.timedelta(hours=1))]
+            h0 = h0 + datetime.timedelta(hours=1)
+
+            total_counts[idx] = total_counts[idx] + _df.shape[0]
+
+        counts = np.divide(counts, total_counts, out=np.zeros_like(counts), where=total_counts!=0)
 
     return counts
