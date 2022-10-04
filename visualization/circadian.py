@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from .multibar import plot_multi_bar
+from .stackedbar import plot_stacked_bar
 from utils import check_kwargs_list
 
 
@@ -10,10 +10,12 @@ def _parse_kwargs(data, **kwargs):
         {'key': 'boxoff', 'default': True, 'type': bool},
         {'key': 'color', 'default': [None for _ in data], 'type': list},
         {'key': 'dpi', 'default': 100, 'type': float},
+        {'key': 'edgecolor', 'default': ['#FFFFFF' for _ in data], 'type': tuple},
         {'key': 'figsize', 'default': (9, 3), 'type': tuple},
-        {'key': 'linewidth', 'default': 0.25, 'type': float},
+        {'key': 'linewidth', 'default': 0.3, 'type': float},
         {'key': 'num', 'default': None, 'type': str},
         {'key': 'title', 'default': 'Circadian Cycle', 'type': str},
+        {'key': 'width', 'default': 1, 'type': float},
         {'key': 'xlabel', 'default': 'Hours', 'type': str},
         {'key': 'xlim', 'default': None, 'type': tuple},
         {'key': 'ylabel', 'default': 'Probability', 'type': str},
@@ -23,13 +25,16 @@ def _parse_kwargs(data, **kwargs):
 
     return kwargs
 
+
 def plot_circadian_cycle(data, labels, **kwargs):
     kwargs = _parse_kwargs(data, **kwargs)
 
     if kwargs.get('ax') is None:
-        plt.figure(num=kwargs.get('num'), figsize=kwargs.get('figsize'), dpi=kwargs.get('dpi'))
+        plt.figure(num=kwargs.get('num'), figsize=kwargs.get(
+            'figsize'), dpi=kwargs.get('dpi'))
         kwargs['ax'] = plt.gca()
 
-    plot_multi_bar(range(24), data, labels=labels, xticks=range(24), legend_anchor=(1.15, 1.1), **kwargs)
+    plot_stacked_bar(range(24), data, labels=labels, xticks=range(
+        25), legend_anchor=(1.15, 1.1), align='edge', **kwargs)
 
     return
