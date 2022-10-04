@@ -1,14 +1,16 @@
 import matplotlib.pyplot as plt
+import numpy as np
+from .multibar import plot_multi_bar
 from utils import check_kwargs_list
 
 
-def _parse_kwargs(**kwargs):
+def _parse_kwargs(data, **kwargs):
     kwargs_list = [
         {'key': 'ax', 'default': None, 'type': None},
         {'key': 'boxoff', 'default': True, 'type': bool},
-        {'key': 'color', 'default': '#1f77b4', 'type': str},
+        {'key': 'color', 'default': [None for _ in data], 'type': list},
         {'key': 'dpi', 'default': 100, 'type': float},
-        {'key': 'figsize', 'default': (6, 3), 'type': tuple},
+        {'key': 'figsize', 'default': (9, 3), 'type': tuple},
         {'key': 'linewidth', 'default': 0.25, 'type': float},
         {'key': 'num', 'default': None, 'type': str},
         {'key': 'title', 'default': 'Circadian Cycle', 'type': str},
@@ -21,28 +23,13 @@ def _parse_kwargs(**kwargs):
 
     return kwargs
 
-def plot_circadian_cycle(data, **kwargs):
-    kwargs = _parse_kwargs(**kwargs)
+def plot_circadian_cycle(data, labels, **kwargs):
+    kwargs = _parse_kwargs(data, **kwargs)
 
     if kwargs.get('ax') is None:
         plt.figure(num=kwargs.get('num'), figsize=kwargs.get('figsize'), dpi=kwargs.get('dpi'))
-        ax = plt.gca()
-    else:
-        ax = kwargs.get('ax')
-    
-    ax.bar(range(24), data, color=kwargs.get('color'), edgecolor=kwargs.get('color'))
+        kwargs['ax'] = plt.gca()
 
-    ax.set_title(kwargs.get('title'))
-    ax.set_xlabel(kwargs.get('xlabel'))
-    ax.set_ylabel(kwargs.get('ylabel'))
-
-    ax.set_xticks(range(24))
-
-    ax.set_xlim(kwargs.get('xlim'))
-    ax.set_ylim(kwargs.get('ylim'))
-
-    if kwargs.get('boxoff') is True:
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
+    plot_multi_bar(range(24), data, labels=labels, xticks=range(24), legend_anchor=(1.15, 1.1), **kwargs)
 
     return
