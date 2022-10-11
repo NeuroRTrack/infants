@@ -1,6 +1,8 @@
 import mne
 import numpy as np
+import os
 import utils
+import warnings
 
 def _get_referenced_channels_names(settings):
     anodes = settings['eeg']['montage']['anode']
@@ -28,23 +30,28 @@ def _check_already_referenced(raw, settings):
 
 
 def preprocess_data(eeg_filename, ann_filename, settings):
-    raw = mne.io.read_raw_edf(
-        eeg_filename, preload=True, infer_types=True, verbose=False)
+    raw = None
 
-    if _check_already_referenced(raw, settings) is False:
-        raw = mne.set_bipolar_reference(raw, settings['eeg']['montage']['anode'],
-                                        settings['eeg']['montage']['cathode'], verbose=False)
+    if os.path.isfile(ann_filename):
+        raw = mne.io.read_raw_edf(
+            eeg_filename, preload=True, infer_types=True, verbose=False)
 
-    raw = raw.pick_channels(_get_referenced_channels_names(settings))
+        if _check_already_referenced(raw, settings) is False:
+            raw = mne.set_bipolar_reference(raw, settings['eeg']['montage']['anode'],
+                                            settings['eeg']['montage']['cathode'], verbose=False)
 
-    raw = raw.notch_filter(settings['eeg']['notch_freq'], verbose=False)
+        raw = raw.pick_channels(_get_referenced_channels_names(settings))
 
-    with utils.IgnoreWarnings('MILLISECONDS'):
-        annotations = mne.read_annotations(ann_filename)
-        annotations = mne.Annotations(annotations.onset * 1e9, annotations.duration,
-                                      annotations.description, orig_time=raw.info['meas_date'])
+        raw = raw.notch_filter(settings['eeg']['notch_freq'], verbose=False)
 
-    raw = raw.set_annotations(annotations, emit_warning=False, verbose=False)
+        with utils.IgnoreWarnings('MILLISECONDS'):
+            annotations = mne.read_annotations(ann_filename)
+            annotations = mne.Annotations(annotations.onset * 1e9, annotations.duration,
+                                        annotations.description, orig_time=raw.info['meas_date'])
+
+        raw = raw.set_annotations(annotations, emit_warning=False, verbose=False)
+    else:
+        warnings.warn(ann_filename + ' not found. Skipped.')
 
     return raw
 
