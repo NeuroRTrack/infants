@@ -6,70 +6,76 @@ from .stats import get_stats
 
 
 def run(settings):
+    path = settings['general']['dataset_dir']
+
     sub = settings['general']['sub']
-    ses = settings['general']['ses']
-    run = settings['general']['run']
+    sub = utils.check_all_setting(sub, 'sub', path, prefix='sub')
 
-    path = os.path.join(settings['general']['dataset_dir'], settings['general']['eeg_subdir'].split('ses')[0].replace(
-        '<SUB>', sub))
+    for _sub in sub:
+        path = os.path.join(settings['general']['dataset_dir'], settings['general']['eeg_subdir'].split('ses')[0].replace(
+            '<SUB>', _sub))
 
-    ses = utils.check_all_setting(ses, 'ses', path, suffix='w')
+        ses = settings['general']['ses']
+        ses = utils.check_all_setting(ses, 'ses', path, suffix='w')
 
-    for _ses in ses:
-        output_dir = utils.create_output_dir(
-            settings['general']['output_dir'], sub, _ses)
+        for _ses in ses:
+            path = os.path.join(settings['general']['dataset_dir'], settings['general']['eeg_subdir'].replace(
+                '<SUB>', _sub).replace('<SES>', _ses))
 
-        descriptions = []
-        unique_descriptions = []
+            run = settings['general']['run']
+            run = utils.check_all_setting(
+                run, 'run', path, suffix=settings['hyp']['suffix'])
 
-        output = {}
-        output['sub'] = sub
-        output['ses'] = _ses
-        output['overall'] = {}
-        output['runs'] = {}
+            output_dir = utils.create_output_dir(
+                settings['general']['output_dir'], _sub, _ses)
 
-        path = os.path.join(settings['general']['dataset_dir'], settings['general']['eeg_subdir'].replace(
-            '<SUB>', sub).replace('<SES>', _ses))
+            descriptions = []
+            unique_descriptions = []
 
-        run = utils.check_all_setting(
-            run, 'run', path, suffix=settings['hyp']['suffix'])
+            output = {}
+            output['sub'] = _sub
+            output['ses'] = _ses
+            output['overall'] = {}
+            output['runs'] = {}
 
-        for _run in run:
+            for _run in run:
+                filename = utils.get_filename(
+                    settings, _sub, _ses, _run, settings['hyp']['suffix'])
+                filename = os.path.join(path, filename)
+
+                # STATS
+                _descriptions, _unique_descriptions = get_descriptions(
+                    filename)
+                _stats = get_stats(_descriptions, _unique_descriptions)
+                output['runs']['run-' + _run] = _stats
+
+                for description in _unique_descriptions:
+                    try:
+                        description.index(unique_descriptions)
+                    except:
+                        unique_descriptions.append(description)
+
+                descriptions.extend(_descriptions)
+
+                # ANNOTATIONS
+                annotations = get_annotations(filename, settings)
+
+                annotations_dir = os.path.join(
+                    output_dir, settings['hyp']['annotations_subdir'])
+                if not os.path.exists(annotations_dir):
+                    os.makedirs(annotations_dir, exist_ok=False)
+
+                filename = utils.get_filename(
+                    settings, _sub, _ses, _run, settings['hyp']['annotations_suffix'])
+
+                annotations.to_csv(os.path.join(
+                    annotations_dir, filename), index=False)
+
+            stats = get_stats(descriptions, unique_descriptions)
+            output['overall'] = stats
+
             filename = utils.get_filename(
-                settings, _ses, _run, settings['hyp']['suffix'])
-            filename = os.path.join(path, filename)
+                settings, _sub, _ses, suffix='_stats.json')
 
-            # STATS
-            _descriptions, _unique_descriptions = get_descriptions(filename)
-            _stats = get_stats(_descriptions, _unique_descriptions)
-            output['runs']['run-' + _run] = _stats
-
-            for description in _unique_descriptions:
-                try:
-                    description.index(unique_descriptions)
-                except:
-                    unique_descriptions.append(description)
-
-            descriptions.extend(_descriptions)
-
-            # ANNOTATIONS
-            annotations = get_annotations(filename, settings)
-
-            annotations_dir = os.path.join(
-                output_dir, settings['hyp']['annotations_subdir'])
-            if not os.path.exists(annotations_dir):
-                os.makedirs(annotations_dir, exist_ok=False)
-
-            filename = utils.get_filename(
-                settings, _ses, _run, settings['hyp']['annotations_suffix'])
-
-            annotations.to_csv(os.path.join(
-                annotations_dir, filename), index=False)
-
-        stats = get_stats(descriptions, unique_descriptions)
-        output['overall'] = stats
-
-        filename = utils.get_filename(settings, _ses, suffix='_stats.json')
-
-        with open(os.path.join(output_dir, filename), 'w') as f:
-            json.dump(output, f)
+            with open(os.path.join(output_dir, filename), 'w') as f:
+                json.dump(output, f)

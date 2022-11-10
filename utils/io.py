@@ -16,29 +16,35 @@ def create_output_dir(output_dir, sub, ses):
     return output_dir
 
 
-def get_filename(settings, ses=None, run=None, suffix=None):
-    filename = settings['general']['filename'].replace(
-        '<SUB>', settings['general']['sub'])
+def get_filename(settings, sub: str, ses: str = None, run: str = None, suffix: str = None):
+    filename = settings['general']['filename']
 
-    if ses is None:
-        ses = settings['general']['ses']
-    if run is None:
-        run = settings['general']['run']
-
+    if (type(sub) is list) and (len(sub) == 1):
+        sub = sub[0]
     if (type(ses) is list) and (len(ses) == 1):
         ses = ses[0]
     if (type(run) is list) and (len(run) == 1):
         run = run[0]
 
-    if (ses == 'all') or (ses == ['all']) or (type(ses) is list):
-        filename, _ = filename.split('_ses')
-    else:
-        filename = filename.replace('<SES>', ses)
+    if (sub is not None) and (type(sub) is not str):
+        raise TypeError('sub is of type ' + str(type(sub)) + ', but must be str.')
+    if (ses is not None) and (type(ses) is not str):
+        raise TypeError('ses is of type ' + str(type(ses)) + ', but must be str.')
+    if (run is not None) and (type(run) is not str):
+        raise TypeError('run is of type ' + str(type(run)) + ', but must be str.')
 
-        if (run == 'all') or (run == ['all']) or (type(run) is list):
-            filename, _ = filename.split('_run')
-        else:
-            filename = filename.replace('<RUN>', run)
+    if sub is None:
+        raise ValueError('sub parameter cannot be None.')
+    else:
+        filename = filename.replace('<SUB>', sub)
+
+    if (ses is None) or (ses == 'all') or (type(ses) is list):
+        filename, _ = filename.split('_ses')
+    elif (run is None) or (run == 'all') or (type(run) is list):
+        filename, _ = filename.split('_run')
+        filename = filename.replace('<SES>', ses)
+    else:
+        filename = filename.replace('<SES>', ses).replace('<RUN>', run)
 
     if suffix is not None:
         filename = filename + suffix
