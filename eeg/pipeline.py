@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import mne
 import numpy as np
 import os
@@ -71,16 +72,20 @@ def run(settings):
                         for ch_1 in range(n_channels - 1):
                             for ch_2 in range(ch_1 + 1, n_channels):
                                 dphase = phase[ch_1, freq, :] - phase[ch_2, freq, :]
-                                cplv[ch_1, ch_2, freq] = np.min(np.exp(1j*dphase))
+                                cplv[ch_1, ch_2, freq] = np.mean(np.exp(1j*dphase))
 
                     return cplv
 
-                morlet = mne.time_frequency.tfr_array_morlet(active_epoch, 512, [2, 4]).squeeze()
+                morlet = mne.time_frequency.tfr_array_morlet(quiet_epoch, 512, [2, 4]).squeeze()
                 print(np.shape(morlet))
                 quiet_cplv = cplv(morlet)
 
                 quiet_iplv = np.abs(np.imag(quiet_cplv))
+
+
+                plt.clf()
                 sns.heatmap(quiet_iplv[:, :, 0])
+                plt.show()
 
 
                 # for event_id in list(epochs.event_id.keys()):
