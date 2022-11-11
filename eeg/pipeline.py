@@ -1,4 +1,7 @@
+import mne
+import numpy as np
 import os
+import seaborn as sns
 import utils
 from tqdm.notebook import tqdm
 from .preprocessing import preprocess_data, concat_epochs, get_epochs_from_annotations
@@ -54,10 +57,33 @@ def run(settings):
             for _ses in ses:
                 epochs = concat_epochs(data[_ses])
 
-                for event_id in list(epochs.event_id.keys()):
-                    fig = epochs[event_id].plot_psd(
-                        fmin=0.1, fmax=30, spatial_colors=False)
-                    fig.axes[0].set_title(event_id)
+                quiet_epoch = [np.concatenate(epochs['QuietSleep']._data, axis=1)]
+                print(np.shape(quiet_epoch))
+                active_epoch = [np.concatenate(epochs['ActiveSleep']._data, axis=1)]
+                print(np.shape(active_epoch))
 
-                    # psds, _ = mne.time_frequency.psd_welch(epochs[event_id], fmin=1, fmax=4, n_overlap=128)
-                    # print(psds)
+                def cplv(morlet):
+                    n_channels, n_freq, _ = morlet.shape
+                    phase = np.angle(morlet)
+                    cplv = np.zeros([n_channels, n_channels, n_freq], dtype=complex)
+
+                    for freq in range(n_freq):
+                        for ch_1 in range(n_channels - 1):
+                            for ch_2 in range(ch_1 + 1, n_channels):
+                                dphase = phase[ch_1, freq, :] - phase[ch_2, freq, :]
+                                cplv[ch_1, ch_2, freq] = np.min(np.exp(1j*dphase))
+
+                    return cplv
+
+                morlet = mne.time_frequency.tfr_array_morlet(active_epoch, 512, [2, 4]).squeeze()
+                print(np.shape(morlet))
+                quiet_cplv = cplv(morlet)
+
+                quiet_iplv = np.abs(np.imag(quiet_cplv))
+                sns.heatmap(quiet_iplv[:, :, 0])
+
+
+                # for event_id in list(epochs.event_id.keys()):
+                #     fig = epochs[event_id].plot_psd(
+                #         fmin=0.1, fmax=30, spatial_colors=False, method='welch')
+                #     fig.axes[0].set_title(event_id)
