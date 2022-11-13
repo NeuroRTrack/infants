@@ -5,6 +5,7 @@ import os
 import seaborn as sns
 import utils
 from tqdm.notebook import tqdm
+from .metrics import get_iPLV, get_PLV_mean
 from .preprocessing import preprocess_data, concat_epochs, get_epochs_from_annotations
 
 
@@ -59,79 +60,28 @@ def run(settings):
                 epochs = concat_epochs(data[_ses])
 
                 QS_epoch = [np.concatenate(epochs['QuietSleep']._data, axis=1)]
+                AS_epoch = [np.concatenate(epochs['ActiveSleep']._data, axis=1)]
+                
                 print(np.shape(QS_epoch))
-                AS_epoch = [np.concatenate(
-                    epochs['ActiveSleep']._data, axis=1)]
                 print(np.shape(AS_epoch))
 
-                def cplv(morlet):
-                    n_channels, n_freq, _ = morlet.shape
-                    phase = np.angle(morlet)
-                    cplv = np.zeros(
-                        [n_channels, n_channels, n_freq], dtype=complex)
+                freqs = np.linspace(1, 20, num=20)
 
-                    for freq in range(n_freq):
-                        for ch_1 in range(n_channels - 1):
-                            for ch_2 in range(ch_1 + 1, n_channels):
-                                dphase = phase[ch_1, freq, :] - \
-                                    phase[ch_2, freq, :]
-                                cplv[ch_1, ch_2, freq] = np.mean(
-                                    np.exp(1j*dphase))
+                QS_iPLV = get_iPLV(QS_epoch, 512, freqs)
+                AS_iPLV = get_iPLV(AS_epoch, 512, freqs)
 
-                    return cplv
+                QS_iPLV_mean = get_PLV_mean(QS_iPLV)
+                AS_iPLV_mean = get_PLV_mean(AS_iPLV)
 
-            freq = np.linspace(2, 20, num=10)
-            n_freq = len(freq)
+                plt.figure()
+                plt.plot(freqs, QS_iPLV_mean, freqs, AS_iPLV_mean)
+                plt.show()
+                plt.legend(['QS', 'AS'])
 
-            QS_morlet = mne.time_frequency.tfr_array_morlet(
-                QS_epoch, 512, freq).squeeze()
-            AS_morlet = mne.time_frequency.tfr_array_morlet(
-                AS_epoch, 512, freq).squeeze()
-
-            QS_cplv = cplv(QS_morlet)
-            AS_cplv = cplv(AS_morlet)
-
-            QS_iplv = np.abs(np.imag(QS_cplv))
-            AS_iplv = np.abs(np.imag(AS_cplv))
-
-            QS_iplv_mean = np.zeros(10)
-            AS_iplv_mean = np.zeros(10)
-
-            idx_triu = np.triu_indices_from(np.zeros((8,8)))
-
-            for _freq in range(n_freq):
-
-                QS_iplv[:, :, _freq] = QS_iplv[:, :,
-                                               _freq] + QS_iplv[:, :, _freq].T
-                _QS_iplv = QS_iplv[:, :, _freq]
-                QS_iplv_mean[_freq] = np.mean(_QS_iplv[idx_triu[0],idx_triu[1]])
-
-                AS_iplv[:, :, _freq] = AS_iplv[:, :,
-                                               _freq] + AS_iplv[:, :, _freq].T
-                _AS_iplv = AS_iplv[:, :, _freq]
-                AS_iplv_mean[_freq] = np.mean(_AS_iplv[idx_triu[0],idx_triu[1]])
-
-            plt.clf()
-            plt.plot(freq, QS_iplv_mean, freq, AS_iplv_mean)
-            plt.show()
-            plt.legend(['QS', 'AS'])
-
-            # print(np.shape(QS_morlet))
-            # QS_cplv = cplv(QS_morlet)
-
-            # QS_iplv = np.abs(np.imag(QS_cplv))
-            # QS_iplv[:, :, 0] = QS_iplv[:, :, 0] + QS_iplv[:, :, 0].T
-
-            # print(np.nonzero(QS_iplv[:, :, 0]))
-            # print(QS_iplv[np.nonzero(QS_iplv[:, :, 0]), 0])
-
-            # QS_iplv0 = QS_iplv[:, :, 0]
-
-            # print(np.mean(QS_iplv0[np.nonzero(QS_iplv0)]), )
-
-            # plt.clf()
-            # sns.heatmap(QS_iplv[:, :, 0])
-            # plt.show()
+                plt.figure()
+                plt.clf()
+                sns.heatmap(QS_iPLV[:, :, 0], cmap='viridis')
+                plt.show()
 
             # for event_id in list(epochs.event_id.keys()):
             #     fig = epochs[event_id].plot_psd(
