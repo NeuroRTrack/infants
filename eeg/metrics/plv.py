@@ -23,7 +23,7 @@ import numpy as np
 def get_cPLV(A, B = None):
     _, n_samples = A.shape
     if B is None:
-        B = A
+        B = np.copy(A)
     
     A_norm = np.divide(A, abs(A))
     B_norm = np.divide(B, abs(B))
@@ -32,14 +32,14 @@ def get_cPLV(A, B = None):
 
     return cPLV
 
-def get_PLV(A):
-    cPLV = get_cPLV(A)
+def get_PLV(A, B = None):
+    cPLV = get_cPLV(A, B)
     PLV = np.abs(cPLV)
 
     return PLV
 
-def get_iPLV(A):
-    cPLV = get_cPLV(A)
+def get_iPLV(A, B = None):
+    cPLV = get_cPLV(A, B)
     iPLV = np.abs(np.imag(cPLV))
 
     return iPLV
