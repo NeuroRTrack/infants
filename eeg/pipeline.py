@@ -60,27 +60,43 @@ def run(settings):
                 epochs = concat_epochs(data[_ses])
 
                 QS_epoch = [np.concatenate(epochs['QuietSleep']._data, axis=1)]
-                AS_epoch = [np.concatenate(epochs['ActiveSleep']._data, axis=1)]
-                
+                AS_epoch = [np.concatenate(
+                    epochs['ActiveSleep']._data, axis=1)]
+
                 print(np.shape(QS_epoch))
                 print(np.shape(AS_epoch))
 
+                _, n_channels, _ = np.shape(QS_epoch)
                 freqs = np.linspace(1, 20, num=20)
+                QS_iPLV = np.zeros((n_channels, n_channels, len(freqs)))
+                AS_iPLV = np.zeros((n_channels, n_channels, len(freqs)))
 
-                QS_iPLV = get_iPLV(QS_epoch, 512, freqs)
-                AS_iPLV = get_iPLV(AS_epoch, 512, freqs)
+                for freq_idx, _freq in enumerate(freqs):
+                    QS_morlet = mne.time_frequency.tfr_array_morlet(
+                        QS_epoch, 512, [_freq]).squeeze()
+                    AS_morlet = mne.time_frequency.tfr_array_morlet(
+                        AS_epoch, 512, [_freq]).squeeze()
+
+                    QS_iPLV[:, :, freq_idx] = get_iPLV(QS_morlet)
+                    AS_iPLV[:, :, freq_idx] = get_iPLV(AS_morlet)
 
                 QS_iPLV_mean = get_PLV_mean(QS_iPLV)
                 AS_iPLV_mean = get_PLV_mean(AS_iPLV)
 
                 plt.figure()
                 plt.plot(freqs, QS_iPLV_mean, freqs, AS_iPLV_mean)
+                ax = plt.gca()
+                ax.spines['top'].set_visible(False)
+                ax.spines['right'].set_visible(False)
                 plt.show()
                 plt.legend(['QS', 'AS'])
+                plt.xlabel('Frequency [Hz]')
+                plt.ylabel('iPLV [-]')
+                plt.title('iPLV')
 
                 plt.figure()
                 plt.clf()
-                sns.heatmap(QS_iPLV[:, :, 0], cmap='viridis')
+                sns.heatmap(np.abs(QS_iPLV[:, :, 0]), cmap='viridis')
                 plt.show()
 
             # for event_id in list(epochs.event_id.keys()):
