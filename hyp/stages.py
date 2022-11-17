@@ -4,7 +4,21 @@ import pandas as pd
 from .time import get_start_date, parse_timestamp, count_full_hours
 
 
-def get_stages(filename):
+def _read_stages(filename: str):
+    '''
+    Get all the stages contained into a hypnogram file.
+    A stage is defined as the union of a description and its occurring time.
+
+    Parameters
+    ----------
+    filename : str
+        The full filename of the hypnogram file to open, including the path.
+
+    Returns
+    -------
+    stages : list
+        All the stages contained in the specified hypnogram.
+    '''
     with open(filename) as f:
         lines = f.readlines()
 
@@ -20,59 +34,109 @@ def get_stages(filename):
     return stages
 
 
-def get_descriptions(filename):
-    stages = get_stages(filename)
+def _parse_descriptions(df: pd.DataFrame, settings: dict, descriptions_column : str = 'description'):
+    '''
+    Parse all the descriptions present in the passed dataframe
+    according to the desired descriptions specified in the settings.
+    All the other descriptions are ignored.
 
-    descriptions = []
-    unique_descriptions = []
-    for stage in stages:
-        descriptions.append(stage['description'])
-        try:
-            unique_descriptions.index(descriptions[-1])
-        except:
-            unique_descriptions.append(descriptions[-1])
+    Parameters
+    ----------
+    df : DataFrame
+        Any dataframe containing a column with the descriptions inside. 
+    settings : dict
+        The execution settings.
+    descriptions_column : str, optional
+        The descriptions column name of the dataframe.
 
-    return descriptions, unique_descriptions
-
-
-def get_hyp_df(filename, settings):
-    stages = get_stages(filename)
-    t0 = parse_timestamp(stages[0]['t'])
-
-    for stage in stages:
-        stage['t'] = parse_timestamp(stage['t']) - t0 if (parse_timestamp(
-            stage['t']) - t0) >= 0 else parse_timestamp(stage['t']) - t0 + parse_timestamp('24:0:0.000')
-
+    Returns
+    -------
+    out : DataFrame
+        The specified dataframe with the updated descriptions column.
+    '''
+    for row_idx, row in df.iterrows():
         try:
             idx = list(map(lambda description: description.lower(),
-                       settings['hyp']['good_descriptions'])).index(stage['description'])
-            stage['description'] = settings['hyp']['good_descriptions'][idx]
+                       settings['hyp']['good_descriptions'])).index(row[descriptions_column])
+            df.at[row_idx, descriptions_column] = settings['hyp']['good_descriptions'][idx]
         except:
-            stage['description'] = settings['hyp']['ignored_description']
+            df.at[row_idx, descriptions_column] = settings['hyp']['ignored_description']
 
-        stage['date'] = get_start_date(filename) + datetime.timedelta(seconds=stage['t'])
-
-    hyp_df = pd.DataFrame(data=stages)
-
-    return hyp_df.copy()
+    return df
 
 
-def get_annotations(filename, settings):
-    hyp_df = get_hyp_df(filename, settings)
+def get_stages(filename: str, settings: dict = None):
+    '''
+    Build a Pandas dataframe representing all the stages present in
+    a hypnogram file.
 
-    annotations = hyp_df.rename(columns={'t': 'onset'})
+    Parameters
+    ----------
+    filename : str
+        The full filename of the hypnogram file to open, including the path.
+    settings : dict, optional
+        The execution settings. If present it parses the descriptions.
+
+    Returns
+    -------
+    stages : DataFrame
+        A dataframe made of three columns, the time in seconds
+        elapsed from the beginning of the hypnogram, the date and time of
+        the stage and the description associated to it.
+    '''
+    stages = _read_stages(filename)
+    t0 = parse_timestamp(stages[0]['t'])
+    start_date = get_start_date(filename)
+
+    for stage in stages:
+        stage['t'] = parse_timestamp(stage['t']) - t0
+        if stage['t'] < 0:
+            stage['t'] = stage['t'] + parse_timestamp('24:0:0.000')
+
+        stage['date'] = start_date + datetime.timedelta(seconds=stage['t'])
+
+    stages = pd.DataFrame(data=stages)
+
+    if settings is not None:
+        stages = _parse_descriptions(stages, settings)
+
+    return stages.copy()
+
+
+def get_annotations(stages: pd.DataFrame, settings: dict):
+    '''
+    Convert the descriptions dataframe into the annotations one,
+    ready to be applied to an EEG signal, according to the MNE library
+    format.
+
+    Parameters
+    ----------
+    stages : DataFrame
+        A dataframe having stages as rows.
+    settings : dict
+        The execution settings.
+
+    Returns
+    -------
+    annotations : DataFrame
+        A dataframe having three columns with the stage description,
+        onset time in seconds and its duration in seconds.
+    '''
+    stages = _parse_descriptions(stages, settings)
+
+    annotations = stages.rename(columns={'t': 'onset'})
     annotations['duration'] = settings['hyp']['sampling_time']
     annotations = annotations[['description', 'onset', 'duration']]
 
-    return annotations
+    return annotations.copy()
 
 
-def count_adjacent_stages_per_hour(df, settings, description : str = 'Wake', min_duration : float = 300):
+def count_adjacent_stages_per_hour(df, settings, description: str = 'Wake', min_duration: float = 300):
     min_duration = round(min_duration/settings['hyp']['sampling_time'])
     counts = np.zeros(24)
 
     h0 = int(df['date'][df.index[0]].strftime('%H'))
-    
+
     start_idx = 0 if df['description'][df.index[0]] == description else None
 
     for idx, value in df.iterrows():
@@ -80,11 +144,11 @@ def count_adjacent_stages_per_hour(df, settings, description : str = 'Wake', min
         if h != h0:
             if (start_idx is not None) and (idx - start_idx >= min_duration):
                 counts[h0] = counts[h0] + 1
-            if value['description'] == description: 
+            if value['description'] == description:
                 start_idx = idx
             else:
                 start_idx = None
-            
+
             h0 = h
         else:
             if start_idx is not None:
@@ -99,7 +163,7 @@ def count_adjacent_stages_per_hour(df, settings, description : str = 'Wake', min
     return counts
 
 
-def get_stage_cycle(df, settings, description : str = 'Wake', normalized = True, tolerance = 45):
+def get_stage_cycle(df, settings, description: str = 'Wake', normalized=True, tolerance=45):
     if type(description) is str:
         description = [description]
 
@@ -117,16 +181,20 @@ def get_stage_cycle(df, settings, description : str = 'Wake', normalized = True,
         h0 = h0 - datetime.timedelta(minutes=h0.minute, seconds=h0.second)
 
         h_end = df['date'][df.index[-1]]
-        h_end = h_end - datetime.timedelta(minutes=h0.minute, seconds=h0.second) + datetime.timedelta(hours=1)
+        h_end = h_end - \
+            datetime.timedelta(minutes=h0.minute,
+                               seconds=h0.second) + datetime.timedelta(hours=1)
 
         while h0 < h_end:
             idx = h0.hour
 
-            _df = df.loc[(df['date'] >= h0) & (df['date'] < h0 + datetime.timedelta(hours=1))]
+            _df = df.loc[(df['date'] >= h0) & (
+                df['date'] < h0 + datetime.timedelta(hours=1))]
             h0 = h0 + datetime.timedelta(hours=1)
 
             total_counts[idx] = total_counts[idx] + _df.shape[0]
 
-        counts = np.divide(counts, total_counts, out=np.zeros_like(counts), where=total_counts!=0)
+        counts = np.divide(counts, total_counts, out=np.zeros_like(
+            counts), where=total_counts != 0)
 
     return counts
