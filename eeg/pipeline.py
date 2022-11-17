@@ -5,7 +5,7 @@ import os
 import seaborn as sns
 import utils
 from tqdm.notebook import tqdm
-from .metrics import get_iPLV, get_PLV_mean
+from .metrics import get_iPLV, get_PLV
 from .preprocessing import preprocess_data, concat_epochs, get_epochs_from_annotations
 
 
@@ -91,25 +91,34 @@ def run(settings):
                 print(data.shape)
                 
                 QS_data = np.squeeze([data[:, window_idxs] for window_idxs in QS_idxs])
-                QS_data = np.moveaxis(QS_data, [0], [2])
                 print(type(QS_data))
                 print(QS_data.shape)
 
-                # temp = []
-                # for window in QS_data:
-                #     QS_iPLV = get_iPLV(window)
-                #     temp.append(QS_iPLV)
-                #     plt.figure()
-                #     plt.clf()
-                #     sns.heatmap(QS_iPLV[:, :, 0], cmap='viridis')
-                #     plt.show()
+                temp = []
+                temp2 = []
+                for window in QS_data:
+                    QS_iPLV = get_iPLV(window)
+                    QS_PLV = get_PLV(window)
+                    temp.append(QS_iPLV)
+                    temp2.append(QS_PLV)
+                    # plt.figure()
+                    # plt.clf()
+                    # sns.heatmap(QS_iPLV[:, :], cmap='viridis')
+                    # plt.show()
 
-                # temp = np.mean(temp, axis=0)
+                temp = np.mean(temp, axis=0)
                 # print(np.shape(temp))
-                # plt.figure()
-                # plt.clf()
-                # sns.heatmap(temp[:, :, 0], cmap='viridis')
-                # plt.show()
+                plt.figure()
+                plt.clf()
+                sns.heatmap(temp[:, :], cmap='viridis')
+                plt.show()
+
+                temp2 = np.mean(temp2, axis=0)
+                # print(np.shape(temp))
+                plt.figure()
+                plt.clf()
+                sns.heatmap(temp2[:, :], cmap='viridis')
+                plt.show()
 
 
                 # QS_epoch = [np.concatenate(epochs['QuietSleep']._data, axis=1)]
