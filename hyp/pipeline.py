@@ -1,7 +1,7 @@
 import os
 import json
 import utils
-from .stages import get_descriptions, get_annotations
+from .stages import get_stages, get_annotations
 from .stats import get_stats
 
 
@@ -44,21 +44,19 @@ def run(settings):
                 filename = os.path.join(path, filename)
 
                 # STATS
-                _descriptions, _unique_descriptions = get_descriptions(
-                    filename)
+                stages = get_stages(filename)
+
+                _descriptions = stages['description'].tolist()
+                _unique_descriptions = stages['description'].unique().tolist()
                 _stats = get_stats(_descriptions, _unique_descriptions)
                 output['runs']['run-' + _run] = _stats
 
-                for description in _unique_descriptions:
-                    try:
-                        description.index(unique_descriptions)
-                    except:
-                        unique_descriptions.append(description)
-
+                unique_descriptions.extend(_unique_descriptions)
+                unique_descriptions = list(set(unique_descriptions))
                 descriptions.extend(_descriptions)
 
                 # ANNOTATIONS
-                annotations = get_annotations(filename, settings)
+                annotations = get_annotations(stages, settings)
 
                 annotations_dir = os.path.join(
                     output_dir, settings['hyp']['annotations_subdir'])
