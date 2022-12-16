@@ -8,7 +8,8 @@ import utils
 from tqdm.notebook import tqdm
 from .metrics import get_iPLV, get_PLV, get_PLV_mean
 from .preprocessing import preprocess_data, concat_epochs, get_epochs_from_annotations
-from .surrogates import get_surrogates
+from .utils import get_CI, get_surrogates
+
 
 def get_adjacent_epochs_idxs(epochs, sfreq, description='Wake', window_duration=180):
     adjacent_idxs = []
@@ -25,19 +26,20 @@ def get_adjacent_epochs_idxs(epochs, sfreq, description='Wake', window_duration=
         elif _description == description:
             if start_idx is None:
                 start_idx = idx
-        
+
         if (start_idx is not None) and (idx - start_idx >= window_size):
             adjacent_idxs.append(range(start_idx, idx))
             start_idx = None
-       
+
     out = np.array(adjacent_idxs)
 
-    del adjacent_idxs 
+    del adjacent_idxs
     del descriptions
     del epochs
     gc.collect()
 
     return out
+
 
 def run(settings):
     path = settings['general']['dataset_dir']
@@ -82,7 +84,7 @@ def run(settings):
                 raw = preprocess_data(eeg_filename, ann_filename, settings)
                 epochs = get_epochs_from_annotations(
                     raw, settings['hyp']['good_descriptions'], settings['hyp']['sampling_time'])
-                
+
                 if epochs is not None:
                     data[_ses].append(epochs)
 
@@ -94,20 +96,23 @@ def run(settings):
             for _ses in ses:
                 epochs = concat_epochs(data[_ses])
                 data = np.array([(np.concatenate(epochs.get_data(), axis=1))])
-                
+
                 sfreq = epochs.info['sfreq']
                 freq_min = settings['eeg']['PLV']['freq_min']
                 freq_max = settings['eeg']['PLV']['freq_max']
                 n_freqs = settings['eeg']['PLV']['n_freqs']
                 freqs = np.linspace(freq_min, freq_max, num=n_freqs)
-                
-                QS_idxs = get_adjacent_epochs_idxs(epochs, sfreq, description='QuietSleep')
+
+                QS_idxs = get_adjacent_epochs_idxs(
+                    epochs, sfreq, description='QuietSleep')
                 print('QuietSleep - # windows: {}'.format(QS_idxs.shape[0]))
 
-                AS_idxs = get_adjacent_epochs_idxs(epochs, sfreq, description='ActiveSleep')
+                AS_idxs = get_adjacent_epochs_idxs(
+                    epochs, sfreq, description='ActiveSleep')
                 print('ActiveSleep - # windows: {}'.format(AS_idxs.shape[0]))
 
-                W_idxs = get_adjacent_epochs_idxs(epochs, sfreq, description='Wake')
+                W_idxs = get_adjacent_epochs_idxs(
+                    epochs, sfreq, description='Wake')
                 print('Wake - # windows: {}'.format(W_idxs.shape[0]))
 
                 del epochs
@@ -116,22 +121,25 @@ def run(settings):
                 labels = ['QS', 'AS', 'W', 'Surrogates']
 
                 PLV_mean = {}
+                PLV_CI = {}
+
                 for label in labels:
-                    PLV_mean[label] = np.zeros([n_freqs])
+                    PLV_mean[label] = np.zeros(n_freqs)
+                    PLV_CI[label] = np.zeros([2, n_freqs])
 
                 for freq_idx, freq in tqdm(enumerate(freqs), total=n_freqs, desc='Frequencies', unit='freq'):
-                    data_morlet = mne.time_frequency.tfr_array_morlet(data, sfreq, [freq], n_jobs=4)[0, :, 0, :]
+                    data_morlet = mne.time_frequency.tfr_array_morlet(
+                        data, sfreq, [freq], n_jobs=4)[0, :, 0, :]
 
-                    PLV_mean['Surrogates'][freq_idx] = get_PLV_mean(get_iPLV(get_surrogates(data_morlet)))
+                    PLV_mean['Surrogates'][freq_idx] = get_PLV_mean(
+                        get_iPLV(get_surrogates(data_morlet)))
 
                     for description_idx, windows in enumerate([QS_idxs, AS_idxs, W_idxs]):
-                        iPLV = np.zeros([data_morlet.shape[0], data_morlet.shape[0]])
+                        iPLV_mean = np.zeros(windows.shape[0])
 
-                        for window in windows:
-                            iPLV = iPLV + get_iPLV(data_morlet[:, list(window)])
-
-                        if windows.shape[0] > 0:
-                            iPLV = iPLV / windows.shape[0]
+                        for window_idx, window in enumerate(windows):
+                            iPLV_mean[window_idx] = get_PLV_mean(
+                                get_iPLV(data_morlet[:, list(window)]))
 
                         # plt.figure()
                         # plt.clf()
@@ -139,11 +147,14 @@ def run(settings):
                         # plt.title('Averaged iPLV - sub-{} - {:.2f} Hz'.format(_sub, freq))
                         # plt.show()
 
-                        PLV_mean[labels[description_idx]][freq_idx] = get_PLV_mean(iPLV)
-                        
-                        del iPLV
+                        PLV_mean[labels[description_idx]
+                                 ][freq_idx] = np.mean(iPLV_mean)
+                        PLV_CI[labels[description_idx]][:,
+                                                        freq_idx] = get_CI(iPLV_mean)
+
+                        del iPLV_mean
                         gc.collect()
-                    
+
                     del data_morlet
                     gc.collect()
 
@@ -151,6 +162,7 @@ def run(settings):
                 plt.clf()
                 for label in labels:
                     plt.plot(freqs, PLV_mean[label], label=label)
+                    plt.fill_between(freqs, PLV_CI[label][0, :], PLV_CI[label][1, :], alpha=.2)
                 plt.legend()
                 plt.show()
 
