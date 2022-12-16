@@ -10,13 +10,13 @@ def _roll(data, shift):
 
     return result[np.arange(data.shape[0]), (n-m) % n]
 
-def get_surrogates(data, iterations = 1):
+def get_surrogates(data, n_iterations = 1):
     n_channels = data.shape[0]
     n_samples = data.shape[1]
 
     surrogates = np.copy(data)
 
-    for _ in iterations:
+    for _ in range(n_iterations):
         shift = np.random.randint(0, n_samples, n_channels)
         surrogates = _roll(surrogates, shift)
 

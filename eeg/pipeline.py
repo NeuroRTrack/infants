@@ -8,7 +8,7 @@ import utils
 from tqdm.notebook import tqdm
 from .metrics import get_iPLV, get_PLV, get_PLV_mean
 from .preprocessing import preprocess_data, concat_epochs, get_epochs_from_annotations
-
+from .surrogates import get_surrogates
 
 def get_adjacent_epochs_idxs(epochs, sfreq, description='Wake', window_duration=180):
     adjacent_idxs = []
@@ -113,15 +113,16 @@ def run(settings):
                 del epochs
                 gc.collect()
 
-                labels = ['QS', 'AS', 'W']
+                labels = ['QS', 'AS', 'W', 'Surrogates']
 
                 PLV_mean = {}
-                PLV_mean[labels[0]] = np.zeros([n_freqs])
-                PLV_mean[labels[1]] = np.zeros([n_freqs])
-                PLV_mean[labels[2]] = np.zeros([n_freqs])
+                for label in labels:
+                    PLV_mean[label] = np.zeros([n_freqs])
 
                 for freq_idx, freq in tqdm(enumerate(freqs), total=n_freqs, desc='Frequencies', unit='freq'):
                     data_morlet = mne.time_frequency.tfr_array_morlet(data, sfreq, [freq], n_jobs=4)[0, :, 0, :]
+
+                    PLV_mean['Surrogates'][freq_idx] = get_PLV_mean(get_iPLV(get_surrogates(data_morlet)))
 
                     for description_idx, windows in enumerate([QS_idxs, AS_idxs, W_idxs]):
                         iPLV = np.zeros([data_morlet.shape[0], data_morlet.shape[0]])
@@ -148,9 +149,8 @@ def run(settings):
 
                 plt.figure()
                 plt.clf()
-                plt.plot(freqs, PLV_mean['QS'], label='QS')
-                plt.plot(freqs, PLV_mean['AS'], label='AS')
-                plt.plot(freqs, PLV_mean['W'], label='W')
+                for label in labels:
+                    plt.plot(freqs, PLV_mean[label], label=label)
                 plt.legend()
                 plt.show()
 
