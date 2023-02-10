@@ -11,7 +11,7 @@ from .preprocessing import preprocess_data, concat_epochs, get_epochs_from_annot
 from .utils import get_CI, get_surrogates
 
 
-def get_adjacent_epochs_idxs(epochs, sfreq, description='Wake', window_duration=180):
+def get_adjacent_epochs_idxs(epochs, sfreq, description='Wake', window_duration=120):
     adjacent_idxs = []
 
     window_size = int(np.round(window_duration * sfreq))
@@ -101,7 +101,7 @@ def run(settings):
                 freq_min = settings['eeg']['PLV']['freq_min']
                 freq_max = settings['eeg']['PLV']['freq_max']
                 n_freqs = settings['eeg']['PLV']['n_freqs']
-                freqs = np.linspace(freq_min, freq_max, num=n_freqs)
+                freqs = np.linspace(freq_min, freq_max, num=n_freqs) #logspace
 
                 QS_idxs = get_adjacent_epochs_idxs(
                     epochs, sfreq, description='QuietSleep')
@@ -150,7 +150,7 @@ def run(settings):
                         PLV_mean[labels[description_idx]
                                  ][freq_idx] = np.mean(iPLV_mean)
                         PLV_CI[labels[description_idx]][:,
-                                                        freq_idx] = get_CI(iPLV_mean)
+                                                        freq_idx] = get_CI(iPLV_mean, n_samples=20)
 
                         del iPLV_mean
                         gc.collect()

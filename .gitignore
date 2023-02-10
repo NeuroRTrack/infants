@@ -1,5 +1,6 @@
 infants-dataset
 output
+*ipynb_checkpoints
 
 *.pyc
 __pycache__
