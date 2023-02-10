@@ -13,7 +13,7 @@ The dataset is organized in compliance with the [BIDS protocol](https://bids-spe
 
 Finally, a `lookup_table.xlsx` file contains all the personal information about the subjects and additional cues about the dataset structure and missing data. Such file is protected by a password for security and privacy reasons.
 ## Code
-The code is written in `Python 3.10` and the usage of `Anaconda` is warmly suggested in order to employ an isolated environment. The `infants.yaml` file provided in this repository can be used to automatically generate a `conda` environment with all the required modules and packages.
+The code is written in `Python 3.10` and the usage of `Anaconda` is warmly suggested in order to employ an isolated environment. The `infants.yml` file provided in this repository can be used to automatically generate a `conda` environment with all the required modules and packages.
 
 When running any experiment or pipeline, the settings - i.e., subjects, sessions, dataset path, ... - are automatically retrieved from the `settings.json` file located in the main directory.
 
